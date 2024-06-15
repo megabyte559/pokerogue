@@ -2500,6 +2500,14 @@ export class ResetStatsAttr extends MoveEffectAttr {
  * Attribute used for moves which swap the user and the target's stat changes.
  */
 export class SwapStatsAttr extends MoveEffectAttr {
+  public stats: BattleStat[];
+
+  constructor(stats: BattleStat | BattleStat[], selfTarget?: boolean, firstHitOnly?: boolean, moveEffectTrigger?: MoveEffectTrigger) {
+    super(selfTarget, moveEffectTrigger, firstHitOnly);
+    this.stats = typeof(stats) === "number"
+      ? [ stats as BattleStat ]
+      : stats as BattleStat[];
+  }
   /**
    * Swaps the user and the target's stat changes.
    * @param user Pokemon that used the move
@@ -2513,10 +2521,11 @@ export class SwapStatsAttr extends MoveEffectAttr {
       return false;
     } //Exits if the move can't apply
     let priorBoost : integer; //For storing a stat boost
-    for (let s = 0; s < target.summonData.battleStats.length; s++) {
-      priorBoost = user.summonData.battleStats[s]; //Store user stat boost
-      user.summonData.battleStats[s] = target.summonData.battleStats[s]; //Applies target boost to self
-      target.summonData.battleStats[s] = priorBoost; //Applies stored boost to target
+    for (let s = 0; s < this.stats.length; s++) {
+      const statIndex = this.stats[s];
+      priorBoost = user.summonData.battleStats[statIndex]; //Store user stat boost
+      user.summonData.battleStats[statIndex] = target.summonData.battleStats[statIndex]; //Applies target boost to self
+      target.summonData.battleStats[statIndex] = priorBoost; //Applies stored boost to target
     }
     target.updateInfo();
     user.updateInfo();
@@ -6513,7 +6522,7 @@ export function initMoves() {
       .attr(CopyMoveAttr)
       .ignoresVirtual(),
     new StatusMove(Moves.POWER_SWAP, Type.PSYCHIC, -1, 10, -1, 0, 4)
-      .unimplemented(),
+      .attr(SwapStatsAttr, [BattleStat.ATK, BattleStat.SPATK]),
     new StatusMove(Moves.GUARD_SWAP, Type.PSYCHIC, -1, 10, -1, 0, 4)
       .unimplemented(),
     new AttackMove(Moves.PUNISHMENT, Type.DARK, MoveCategory.PHYSICAL, -1, 100, 5, -1, 0, 4)
@@ -6529,7 +6538,7 @@ export function initMoves() {
       .attr(AddArenaTrapTagAttr, ArenaTagType.TOXIC_SPIKES)
       .target(MoveTarget.ENEMY_SIDE),
     new StatusMove(Moves.HEART_SWAP, Type.PSYCHIC, -1, 10, -1, 0, 4)
-      .attr(SwapStatsAttr),
+      .attr(SwapStatsAttr, [BattleStat.ATK, BattleStat.DEF, BattleStat.SPATK, BattleStat.SPDEF, BattleStat.SPD, BattleStat.ACC, BattleStat.EVA]),
     new SelfStatusMove(Moves.AQUA_RING, Type.WATER, -1, 20, -1, 0, 4)
       .attr(AddBattlerTagAttr, BattlerTagType.AQUA_RING, true, true),
     new SelfStatusMove(Moves.MAGNET_RISE, Type.ELECTRIC, -1, 10, -1, 0, 4)
